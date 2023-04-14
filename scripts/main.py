@@ -17,9 +17,33 @@ import argparse
 from logger import logger
 import logging
 from prompt import get_prompt
+import gettext,os
 
 cfg = Config()
 
+def load_language_from_config():
+    """Load the language value from the Config and set up gettext for localization."""
+
+    # 获取当前文件的绝对路径
+    current_file_path = os.path.abspath(__file__)
+
+    # 获取当前文件所在的目录
+    current_file_dir = os.path.dirname(current_file_path)
+
+    # 设置 locale_dir 为当前文件所在目录下的 locales 文件夹
+    locale_dir = os.path.join(current_file_dir, 'locales')
+
+    # Get the language value from the Config
+    lang = cfg.language
+
+    # Set the path for translation files
+    gettext.bindtextdomain('messages', locale_dir)
+    gettext.textdomain('messages')
+
+    # Create a gettext object for the selected language
+    translator = gettext.translation('messages', locale_dir, languages=[lang], fallback=True)
+    global _
+    _ = translator.gettext
 
 def check_openai_api_key():
     """Check if the OpenAI API key is set in config.py or as an environment variable."""
@@ -336,6 +360,7 @@ def main():
     global ai_name, memory
     # TODO: fill in llm values here
     check_openai_api_key()
+    load_language_from_config()
     parse_arguments()
     logger.set_level(logging.DEBUG if cfg.debug_mode else logging.INFO)
     ai_name = ""
